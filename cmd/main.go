@@ -17,7 +17,7 @@ import (
 )
 
 // VERSION 程序版本号
-var VERSION = "dev"
+var VERSION = "0.19"
 
 func main() {
 	ctx := utils.NewCtx(nil, 0xffff)
