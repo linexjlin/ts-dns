@@ -136,8 +136,8 @@ func NewQueryLogger(logger *log.Logger, ignoreQTypes []string,
 // Handler 存储主要配置的dns请求处理器，程序核心
 type Handler struct {
 	Mux           *sync.RWMutex
-	Listen        string
-	Network       string
+	Listens       []string
+	Networks      []string
 	DisableIPv6   bool
 	Cache         *cache.DNSCache
 	GFWMatcher    *matcher.ABPlus

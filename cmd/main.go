@@ -45,23 +45,29 @@ func main() {
 	}
 	// 启动dns服务，因为可能会同时监听TCP/UDP，所以封装个函数
 	wg := sync.WaitGroup{}
-	runSrv := func(net string) {
-		defer wg.Done()
-		srv := &dns.Server{Addr: handler.Listen, Net: net, Handler: handler}
-		utils.CtxWarn(ctx, "listen on %s/%s", handler.Listen, net)
-		if err := srv.ListenAndServe(); err != nil {
-			utils.CtxError(ctx, err.Error())
+	utils.CtxInfo(ctx, "listens%s", handler.Listens)
+	for i, l := range handler.Listens {
+		network := handler.Networks[i]
+		listen := l
+		runSrv := func(net string) {
+			defer wg.Done()
+			srv := &dns.Server{Addr: listen, Net: net, Handler: handler}
+			utils.CtxWarn(ctx, "listen on %s/%s", listen, net)
+			if err := srv.ListenAndServe(); err != nil {
+				utils.CtxError(ctx, err.Error())
+			}
+		}
+		// 判断是否在配置文件里指定了监听协议
+		if network != "" {
+			wg.Add(1)
+			go runSrv(network)
+		} else {
+			wg.Add(2)
+			go runSrv("udp")
+			go runSrv("tcp")
 		}
 	}
-	// 判断是否在配置文件里指定了监听协议
-	if handler.Network != "" {
-		wg.Add(1)
-		go runSrv(handler.Network)
-	} else {
-		wg.Add(2)
-		go runSrv("udp")
-		go runSrv("tcp")
-	}
+
 	wg.Wait()
 	utils.CtxInfo(ctx, "ts-dns exited.")
 }

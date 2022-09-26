@@ -229,11 +229,20 @@ func NewHandler(ctx context.Context, filename string) (handler *inbound.Handler,
 	}
 	config.SetDefault()
 	// 初始化handler
-	handler = &inbound.Handler{Mux: new(sync.RWMutex), Listen: config.Listen}
-	// 从listen中分离监听地址和协议
-	if i := strings.Index(config.Listen, "/"); i != -1 {
-		handler.Listen, handler.Network = config.Listen[:i], config.Listen[i+1:]
+	handler = &inbound.Handler{Mux: new(sync.RWMutex)}
+
+	for _, listen := range strings.Split(config.Listen, ",") {
+		// 从listen中分离监听地址和协议
+		if i := strings.Index(listen, "/"); i != -1 {
+			handler.Listens = append(handler.Listens, listen[:i])
+			handler.Networks = append(handler.Networks, listen[i+1:])
+		} else {
+			handler.Listens = append(handler.Listens, listen)
+			handler.Networks = append(handler.Networks, "")
+		}
 	}
+
+	config.SetDefault()
 	handler.DisableIPv6 = config.DisableIPv6
 	if handler.DisableIPv6 {
 		utils.CtxWarn(ctx, "disable ipv6 resolve")
